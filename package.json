@@ -6,14 +6,15 @@
   "dependencies": {
     "call-me-maybe": "^1.0.1",
     "codecs": "^2.1.0",
+    "dht-rpc": "^5.0.0-rc.6",
     "hypercore-protocol": "^8.0.0",
-    "hyperswarm": "^2.14.1",
+    "hyperswarm": "^3.0.0-beta3",
     "nanoresource-promise": "^1.2.2",
     "pump": "^3.0.0"
   },
   "devDependencies": {
-    "@hyperswarm/dht": "^4.0.1",
-    "corestore": "^5.0.0",
+    "@hyperswarm/dht": "^5.0.0-rc.5",
+    "corestore": "^5.8.2",
     "hypercore-crypto": "^2.1.1",
     "random-access-memory": "^3.1.1",
     "standard": "^12.0.1",
