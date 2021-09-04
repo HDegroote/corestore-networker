@@ -29,10 +29,10 @@ await store.ready()
 const networker = new Networker(store)
 
 // Start announcing or lookup up a discovery key on the DHT.
-await networker.configure(discoveryKey, { announce: true, lookup: true })
+await networker.configure(discoveryKey, { server: true, client: true })
 
 // Stop announcing or looking up a discovery key.
-networker.configure(discoveryKey, { announce: false, lookup: false })
+networker.configure(discoveryKey, { server: false, client: false })
 
 // Shut down the swarm (and unnanounce all keys)
 await networker.close()
@@ -79,8 +79,8 @@ Waits for the topic to be fully joined/left before resolving.
 
 `opts` is an options map of network configuration options that can include:
 ```js
-  announce: true, // Announce the discovery key on the swarm
-  lookup: true  // Look up the discovery key on the swarm,
+  server: true, // Announce the discovery key on the swarm
+  client: true  // Look up the discovery key on the swarm,
   flush: true // Wait for a complete swarm flush before resolving.
 ```
 

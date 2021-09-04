@@ -16,26 +16,8 @@ class CorestoreNetworker extends Nanoresource {
     if (this.opts.bootstrap) {
       if (typeof this.opts.bootstrap === 'string') this.opts.bootstrap = [this.opts.bootstrap];
     }
-    /*
-    the reason for protocolKeyPair and keyPair as separate is because
-    if I use one for the other there's an error
 
-    Error:
-        HypercoreProtocol: 
-            AssertionError: s.secretKey must be 32 bytes
-            at: node_modules/noise-protocol/handshake-state.js:208
-            from: assert(s.secretKey.byteLength === dh.SKLEN, `s.secretKey must be ${dh.SKLEN} bytes`)
-    Error:
-        DHT(Hyperswarm):
-            Error: Server is already listening on a keyPair
-            at: node_modules/@hyperswarm/dht/index.js:638
-            from: throw new Error('Server is already listening on a keyPair')
-            
-            For this it seems it never even started listening
-    */
     this.keyPair = opts.keyPair || HypercoreProtocol.keyPair();
-    // this.protocolKeyPair = opts.protocolKeyPair || HypercoreProtocol.keyPair();
-
     this._replicationOpts = {
       encrypt: true,
       live: true,
@@ -178,9 +160,6 @@ class CorestoreNetworker extends Nanoresource {
 
       const protocolStream = new HypercoreProtocol(isInitiator, { ...this._replicationOpts });
       protocolStream.on('handshake', () => {
-        // const deduped = info.deduplicate(protocolStream.publicKey, protocolStream.remotePublicKey);
-        // if (!deduped)
-
         finishedHandshake = true;
         self._addStream(protocolStream);
         if (!processed) {

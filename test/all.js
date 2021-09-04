@@ -2,12 +2,12 @@ const test = require('tape');
 const ram = require('random-access-memory');
 const DHT = require('@hyperswarm/dht');
 const hypercoreCrypto = require('hypercore-crypto');
-const HypercoreProtocol = require('hypercore-protocol');
+// const HypercoreProtocol = require('hypercore-protocol');
 const Corestore = require('corestore');
 
 const CorestoreNetworker = require('..');
 
-const BOOTSTRAP_PORT = 8124;
+const BOOTSTRAP_PORT = 3100;
 var bootstrap = null;
 
 test('simple replication', async (t) => {
@@ -104,7 +104,6 @@ test('replicate sub-cores', async (t) => {
 //   const keyPair2 = HypercoreProtocol.keyPair();
 //   const { store: store1, networker: networker1 } = await create({ protocolKeyPair: keyPair1 });
 //   const { store: store2, networker: networker2 } = await create({ protocolKeyPair: keyPair2 });
-//   // console.log('keypairs', { keyPair1, keyPair2 });
 
 //   const core1 = store1.get();
 //   const core3 = store2.get(core1.key);
@@ -157,7 +156,9 @@ test('join status only emits flushed after all handshakes', async (t) => {
   networker2.on('flushed', (dkey) => {
     if (!dkey.equals(core1.discoveryKey)) return;
     join2Flushed++;
-    join2FlushPeers = core2.peers.length;
+    setTimeout(() => {
+      join2FlushPeers = core2.peers.length;
+    }, 10);
   });
   await networker2.configure(core1.discoveryKey);
 
@@ -165,12 +166,10 @@ test('join status only emits flushed after all handshakes', async (t) => {
   networker3.on('flushed', (dkey) => {
     if (!dkey.equals(core1.discoveryKey)) return;
     join3Flushed++;
-    join3FlushPeers = core3.peers.length;
-    console.log({ join2Flushed, join2FlushPeers, join3Flushed, join3FlushPeers });
-    // console.log('core3::peers\n\n', core3.peers);
-    // console.log('swarm::peers', networker3.swarm.peers);
-    // console.log('networker::peers\n', networker3.peers);
-    allFlushed();
+    setTimeout(() => {
+      join3FlushPeers = core3.peers.length;
+      allFlushed();
+    }, 50);
   });
   networker3.configure(core1.discoveryKey);
 
@@ -494,10 +493,9 @@ test('bidirectional extension send/receive', async (t) => {
 });
 
 test('onauthenticate hook', async (t) => {
-  t.plan(2);
+  // t.plan(2);
   const { networker: networker1 } = await create({
     async onauthenticate(peerPublicKey) {
-      console.log(peerPublicKey, networker2.keyPair.publicKey);
       return t.deepEquals(peerPublicKey, networker2.keyPair.publicKey);
     },
   });
@@ -513,26 +511,21 @@ test('onauthenticate hook', async (t) => {
 });
 
 async function create(opts = {}) {
-  // if (!bootstrap) {
-  //   bootstrap = new DHT({
-  //     bind: BOOTSTRAP_PORT,
-  //     bootstrap: [],
-  //   });
-  //   // await bootstrap.ready();
-  //   // bootstrap.bind(BOOTSTRAP_PORT);
-  //   await new Promise((resolve) => {
-  //     return bootstrap.once('listening', () => {
-  //       console.log('address:', bootstrap.address());
-  //       resolve();
-  //     });
-  //   });
-  // }
+  if (!bootstrap) {
+    bootstrap = new DHT({});
+
+    bootstrap.bind(BOOTSTRAP_PORT);
+
+    await new Promise((resolve) => {
+      return bootstrap.once('listening', resolve);
+    });
+  }
   const store = new Corestore(ram);
   await store.ready();
 
   const networker = new CorestoreNetworker(store, {
     ...opts,
-    // bootstrap: [`localhost:${BOOTSTRAP_PORT}`],
+    bootstrap: [`localhost:${BOOTSTRAP_PORT}`],
   });
 
   return { store, networker };
