@@ -4,16 +4,15 @@
   "description": "A corestore networking module based on Hyperswarm.",
   "main": "index.js",
   "dependencies": {
-    "call-me-maybe": "^1.0.1",
     "codecs": "^2.1.0",
-    "dht-rpc": "^5.0.0-rc.6",
+    "dht-rpc": "^5.0.0-rc.7",
     "hypercore-protocol": "^8.0.0",
-    "hyperswarm": "^3.0.0-beta3",
+    "hyperswarm": "^3.0.0-rc.0",
     "nanoresource-promise": "^1.2.2",
     "pump": "^3.0.0"
   },
   "devDependencies": {
-    "@hyperswarm/dht": "^5.0.0-rc.5",
+    "@hyperswarm/dht": "^5.0.0-rc.12",
     "corestore": "^5.8.2",
     "hypercore-crypto": "^2.1.1",
     "random-access-memory": "^3.1.1",

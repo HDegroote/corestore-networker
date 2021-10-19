@@ -4,7 +4,6 @@ const DHT = require('@hyperswarm/dht');
 const Hyperswarm = require('hyperswarm');
 const codecs = require('codecs');
 const pump = require('pump');
-const maybe = require('call-me-maybe');
 
 const STREAM_PEER = Symbol('networker-stream-peer');
 
@@ -219,8 +218,10 @@ class CorestoreNetworker extends Nanoresource {
     });
   }
 
-  configure(discoveryKey, opts = {}, cb) {
-    return maybeOptional(cb, this._configure(discoveryKey, opts));
+  configure(discoveryKey, opts = {}) {
+    const prom = this._configure(discoveryKey, opts);
+    prom.catch(noop);
+    return prom;
   }
 
   async _configure(discoveryKey, opts) {
@@ -344,9 +345,3 @@ function toString(dk) {
 }
 
 function noop() {}
-
-function maybeOptional(cb, prom) {
-  if (cb) maybe(cb, prom);
-  else prom.catch(noop);
-  return prom;
-}

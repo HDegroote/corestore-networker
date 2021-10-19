@@ -7,8 +7,10 @@ const Corestore = require('corestore');
 
 const CorestoreNetworker = require('..');
 
-const BOOTSTRAP_PORT = 3100;
-var bootstrap = null;
+const BOOTSTRAP_PORTS = [10001, 10002];
+let bootstrap_nodes;
+let bootstrapper1;
+let bootstrapper2;
 
 test('simple replication', async (t) => {
   const { store: store1, networker: networker1 } = await create();
@@ -98,7 +100,10 @@ test('replicate sub-cores', async (t) => {
   await cleanup([networker1, networker2]);
   t.end();
 });
-
+/** 
+  @reason : it's because HypercoreProtocol.keyPair() gives 32bits secretKey which is not compatible with the new API,
+   DHT.keyPair(), which gives secretKey as 64bits; Also corestore still uses HypercoreProtocol.keyPair()
+*/
 // test('can replicate using a custom keypair', async (t) => {
 //   const keyPair1 = HypercoreProtocol.keyPair();
 //   const keyPair2 = HypercoreProtocol.keyPair();
@@ -510,22 +515,32 @@ test('onauthenticate hook', async (t) => {
   t.end();
 });
 
+const getBootstrap = ({ address, port }) => ({ host: address, port });
 async function create(opts = {}) {
-  if (!bootstrap) {
-    bootstrap = new DHT({});
+  if (!bootstrap_nodes) {
+    bootstrapper1 = DHT.bootstrapper(BOOTSTRAP_PORTS[0], { ephemeral: true, bootstrap: [] });
+    await bootstrapper1.ready();
 
-    bootstrap.bind(BOOTSTRAP_PORT);
-
-    await new Promise((resolve) => {
-      return bootstrap.once('listening', resolve);
+    bootstrapper2 = DHT.bootstrapper(BOOTSTRAP_PORTS[1], {
+      bootstrap: [getBootstrap(bootstrapper1.address())],
+      ephemeral: false,
     });
+
+    await bootstrapper2.ready();
+
+    bootstrap_nodes = [
+      getBootstrap(bootstrapper1.address()),
+      getBootstrap(bootstrapper2.address()),
+    ];
+
+    // console.log('listening', bootstrap_nodes);
   }
   const store = new Corestore(ram);
   await store.ready();
 
   const networker = new CorestoreNetworker(store, {
     ...opts,
-    bootstrap: [`localhost:${BOOTSTRAP_PORT}`],
+    bootstrap: bootstrap_nodes,
   });
 
   return { store, networker };
@@ -553,8 +568,11 @@ async function cleanup(networkers) {
   for (const networker of networkers) {
     await networker.close();
   }
-  if (bootstrap) {
-    await bootstrap.destroy();
-    bootstrap = null;
+  if (bootstrap_nodes) {
+    await bootstrapper1.destroy();
+    await bootstrapper2.destroy();
+    bootstrapper1 = null;
+    bootstrapper2 = null;
+    bootstrap_nodes = null;
   }
 }
