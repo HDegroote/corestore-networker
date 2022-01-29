@@ -31,7 +31,7 @@ class CorestoreNetworker extends Nanoresource {
     this._flushed = new Set();
     this._configurations = new Map();
 
-    this._extensions = new Set();
+    // this._extensions = new Set();
 
     this._streamsProcessing = 0;
     this._streamsProcessed = 0;
@@ -107,17 +107,17 @@ class CorestoreNetworker extends Nanoresource {
     return this.swarm.leave(keyBuf);
   }
 
-  _registerAllExtensions(peer) {
-    for (const ext of this._extensions) {
-      ext._registerExtension(peer);
-    }
-  }
+  // _registerAllExtensions(peer) {
+  //   for (const ext of this._extensions) {
+  //     ext._registerExtension(peer);
+  //   }
+  // }
 
-  _unregisterAllExtensions(peer) {
-    for (const ext of this._extensions) {
-      ext._unregisterExtension(peer);
-    }
-  }
+  // _unregisterAllExtensions(peer) {
+  //   for (const ext of this._extensions) {
+  //     ext._unregisterExtension(peer);
+  //   }
+  // }
 
   _addStream(stream) {
     this._replicate(stream);
@@ -127,7 +127,7 @@ class CorestoreNetworker extends Nanoresource {
     this.peers.add(peer);
     stream[STREAM_PEER] = peer;
 
-    this._registerAllExtensions(peer);
+    // this._registerAllExtensions(peer);
 
     this.emit('peer-add', peer);
     this.emit('handshake', stream);
@@ -137,7 +137,7 @@ class CorestoreNetworker extends Nanoresource {
     this.streams.delete(stream);
     if (stream[STREAM_PEER]) {
       const peer = stream[STREAM_PEER];
-      this._unregisterAllExtensions(peer);
+      // this._unregisterAllExtensions(peer);
       this.peers.delete(peer);
       this.emit('peer-remove', peer);
     }
@@ -191,10 +191,10 @@ class CorestoreNetworker extends Nanoresource {
   async _close() {
     if (!this.swarm) return null;
 
-    for (const ext of this._extensions) {
-      ext.destroy();
-    }
-    this._extensions.clear();
+    // for (const ext of this._extensions) {
+    //   ext.destroy();
+    // }
+    // this._extensions.clear();
 
     for (const stream of this.streams) {
       stream.destroy();
@@ -267,71 +267,71 @@ class CorestoreNetworker extends Nanoresource {
     return this._flushed.has(discoveryKey);
   }
 
-  registerExtension(name, handlers) {
-    if (name && typeof name === 'object') return this.registerExtension(null, name);
-    const ext = new SwarmExtension(this, name || handlers.name, handlers);
-    this._extensions.add(ext);
-    for (const peer of this.peers) {
-      ext._registerExtension(peer);
-    }
-    return ext;
-  }
+  // registerExtension(name, handlers) {
+  //   if (name && typeof name === 'object') return this.registerExtension(null, name);
+  //   const ext = new SwarmExtension(this, name || handlers.name, handlers);
+  //   this._extensions.add(ext);
+  //   for (const peer of this.peers) {
+  //     ext._registerExtension(peer);
+  //   }
+  //   return ext;
+  // }
 }
 
 module.exports = CorestoreNetworker;
 
-class SwarmExtension {
-  constructor(networker, name, opts) {
-    if (typeof opts === 'function') opts = opts(this);
-    this.networker = networker;
-    this.name = name;
-    this.encoding = codecs((opts && opts.encoding) || 'binary');
-    this._peerExtensions = new Map();
+// class SwarmExtension {
+//   constructor(networker, name, opts) {
+//     if (typeof opts === 'function') opts = opts(this);
+//     this.networker = networker;
+//     this.name = name;
+//     this.encoding = codecs((opts && opts.encoding) || 'binary');
+//     this._peerExtensions = new Map();
 
-    this.onmessage = opts.onmessage;
-    this.onerror = opts.onerror;
-  }
+//     this.onmessage = opts.onmessage;
+//     this.onerror = opts.onerror;
+//   }
 
-  _registerExtension(peer) {
-    // peer.stream.extensions.exclusive = false;
-    const peerExt = peer.stream.registerExtension(this.name, {
-      encoding: this.encoding,
-      onmessage: this.onmessage && ((message) => this.onmessage(message, peer)),
-      onerror: this.onerror && ((err) => this.onerror(err)),
-    });
-    this._peerExtensions.set(peer, peerExt);
-  }
+//   _registerExtension(peer) {
+//     // peer.stream.extensions.exclusive = false;
+//     const peerExt = peer.stream.registerExtension(this.name, {
+//       encoding: this.encoding,
+//       onmessage: this.onmessage && ((message) => this.onmessage(message, peer)),
+//       onerror: this.onerror && ((err) => this.onerror(err)),
+//     });
+//     this._peerExtensions.set(peer, peerExt);
+//   }
 
-  _unregisterExtension(peer) {
-    if (!this._peerExtensions.has(peer)) return;
-    const peerExt = this._peerExtensions.get(peer);
-    peerExt.destroy();
-    this._peerExtensions.delete(peer);
-  }
+//   _unregisterExtension(peer) {
+//     if (!this._peerExtensions.has(peer)) return;
+//     const peerExt = this._peerExtensions.get(peer);
+//     peerExt.destroy();
+//     this._peerExtensions.delete(peer);
+//   }
 
-  broadcast(message) {
-    for (const peerExt of this._peerExtensions.values()) {
-      peerExt.send(message);
-    }
-  }
+//   broadcast(message) {
+//     for (const peerExt of this._peerExtensions.values()) {
+//       peerExt.send(message);
+//     }
+//   }
 
-  send(message, peer) {
-    const peerExt = this._peerExtensions.get(peer);
-    if (!peer) throw new Error('Peer must be specified.');
-    if (!peerExt)
-      throw new Error('Extension not registered for peer ' + peer.remotePublicKey.toString('hex'));
-    peerExt.send(message);
-  }
+//   send(message, peer) {
+//     const peerExt = this._peerExtensions.get(peer);
+//     if (!peer) throw new Error('Peer must be specified.');
+//     if (!peerExt)
+//       throw new Error('Extension not registered for peer ' + peer.remotePublicKey.toString('hex'));
+//     peerExt.send(message);
+//   }
 
-  destroy() {
-    for (const peerExt of this._peerExtensions.values()) {
-      peerExt.destroy();
-    }
-    this._peerExtensions.clear();
-    this.onmessage = null;
-    this.onerror = null;
-  }
-}
+//   destroy() {
+//     for (const peerExt of this._peerExtensions.values()) {
+//       peerExt.destroy();
+//     }
+//     this._peerExtensions.clear();
+//     this.onmessage = null;
+//     this.onerror = null;
+//   }
+// }
 
 function intoPeer(stream) {
   return {
