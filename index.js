@@ -1,5 +1,5 @@
 const { NanoresourcePromise: Nanoresource } = require('nanoresource-promise/emitter');
-const HypercoreProtocol = require('hypercore-protocol');
+const Hypercore = require('hypercore');
 const DHT = require('@hyperswarm/dht');
 const Hyperswarm = require('hyperswarm');
 const codecs = require('codecs');
@@ -16,7 +16,7 @@ class CorestoreNetworker extends Nanoresource {
       if (typeof this.opts.bootstrap === 'string') this.opts.bootstrap = [this.opts.bootstrap];
     }
 
-    this.keyPair = opts.keyPair || HypercoreProtocol.keyPair();
+    this.keyPair = opts.keyPair || DHT.keyPair();
     this._replicationOpts = {
       encrypt: true,
       live: true,
@@ -157,7 +157,9 @@ class CorestoreNetworker extends Nanoresource {
       var finishedHandshake = false;
       var processed = false;
 
-      const protocolStream = new HypercoreProtocol(isInitiator, { ...this._replicationOpts });
+      const protocolStream = Hypercore.createProtocolStream(isInitiator, {
+        ...this._replicationOpts,
+      });
       protocolStream.on('handshake', () => {
         finishedHandshake = true;
         self._addStream(protocolStream);
@@ -291,7 +293,7 @@ class SwarmExtension {
   }
 
   _registerExtension(peer) {
-    peer.stream.extensions.exclusive = false;
+    // peer.stream.extensions.exclusive = false;
     const peerExt = peer.stream.registerExtension(this.name, {
       encoding: this.encoding,
       onmessage: this.onmessage && ((message) => this.onmessage(message, peer)),
